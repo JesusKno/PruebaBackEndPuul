@@ -1,0 +1,70 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url = env("DATABASE_URL")
+}
+
+model UserRole {
+  id_role Int @id @default(autoincrement())
+  name_role String @unique @db.VarChar(50)
+
+  users User[]
+}
+
+model TaskStatus {
+  id_status Int @id @default(autoincrement())
+  name_status String @unique @db.VarChar(50)
+
+  task Task[]
+}
+
+model User {
+  id_user      Int      @id @default(autoincrement())
+  name_user    String   @db.VarChar(150)
+  email_user   String   @unique @db.VarChar(255)
+  id_role_user Int
+  created_at   DateTime @default(now())
+  updated_at   DateTime @updatedAt
+
+  role         UserRole @relation(fields: [id_role_user], references: [id_role])
+  assignments  TaskAssignee[]
+}
+
+model Task {
+  id_task              Int      @id @default(autoincrement())
+  title_task           String   @db.VarChar(255)
+  description_task     String?  @db.Text
+  estimated_hours_task Decimal  @db.Decimal(5, 2)
+  spent_hours_task     Decimal? @db.Decimal(5, 2)
+  due_date_task        DateTime
+  id_status_task       Int
+  cost_task            Decimal  @db.Decimal(12, 2)
+  created_at           DateTime @default(now())
+  updated_at           DateTime @updatedAt
+
+  status               TaskStatus @relation(fields: [id_status_task], references: [id_status])
+  assignments          TaskAssignee[]
+}
+
+model TaskAssignee {
+  id_task     Int
+  id_user     Int
+  assigned_at DateTime @default(now())
+
+  task Task @relation(fields: [id_task], references: [id_task], onDelete: Cascade)
+  user User @relation(fields: [id_user], references: [id_user], onDelete: Cascade)
+
+  @@id([id_task, id_user])
+  @@index([id_user])
+  @@index([id_task])
+}
