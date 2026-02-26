@@ -233,4 +233,71 @@ export class TasksService {
     // 4) regresa la tarea ya con asignaciones
     return this.findOne(id_task);
   }
+
+  async analyticsByStatus() {
+    const statuses = await this.prisma.taskStatus.findMany({
+      select: { id_status: true, name_status: true },
+    });
+    const statusMap = new Map(
+      statuses.map((s) => [s.id_status, s.name_status]),
+    );
+
+    const byStatus = await this.prisma.task.groupBy({
+      by: ['id_status_task'],
+      _count: { _all: true },
+    });
+
+    return byStatus.map((row) => ({
+      status: statusMap.get(row.id_status_task) ?? String(row.id_status_task),
+      count: row._count._all,
+    }));
+  }
+
+  async analyticsTopUsersByTerminatedCost(limit = 5) {
+    const terminated = await this.prisma.taskStatus.findUnique({
+      where: { name_status: 'TERMINADA' },
+      select: { id_status: true },
+    });
+
+    if (!terminated) return [];
+
+    const rows = await this.prisma.taskAssignee.findMany({
+      where: { task: { id_status_task: terminated.id_status } },
+      select: { id_user: true },
+      distinct: ['id_user'],
+    });
+
+    const result = await Promise.all(
+      rows.map(async ({ id_user }) => {
+        const user = await this.prisma.user.findUnique({
+          where: { id_user },
+          select: { id_user: true, name_user: true, email_user: true },
+        });
+
+        const tasks = await this.prisma.task.findMany({
+          where: {
+            id_status_task: terminated.id_status,
+            assignments: { some: { id_user } },
+          },
+          select: { cost_task: true },
+        });
+
+        const totalCost = tasks.reduce(
+          (acc, t) => acc + Number(t.cost_task),
+          0,
+        );
+
+        return {
+          user,
+          terminatedTasksCount: tasks.length,
+          terminatedTasksTotalCost: totalCost,
+        };
+      }),
+    );
+
+    result.sort(
+      (a, b) => b.terminatedTasksTotalCost - a.terminatedTasksTotalCost,
+    );
+    return result.slice(0, limit);
+  }
 }

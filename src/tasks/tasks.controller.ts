@@ -13,7 +13,6 @@ import { TasksService } from './tasks.service';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { AssignAssigneesDto } from './dto/assign-assignees.dto';
-import { title } from 'process';
 
 @Controller('tasks')
 export class TasksController {
@@ -42,6 +41,28 @@ export class TasksController {
       dueDateTo,
       assigneeQuery,
     });
+  }
+
+  @Get('analytics')
+  async analytics() {
+    const [tasksByStatus, topUsersByTerminatedCost] = await Promise.all([
+      this.tasksService.analyticsByStatus(),
+      this.tasksService.analyticsTopUsersByTerminatedCost(5),
+    ]);
+
+    return { tasksByStatus, topUsersByTerminatedCost };
+  }
+
+  @Get('analytics/status')
+  analyticsStatus() {
+    return this.tasksService.analyticsByStatus();
+  }
+
+  @Get('analytics/top-users')
+  analyticsTopUsers(@Query('limit') limit?: string) {
+    const parsed = limit ? Number(limit) : 5;
+    const safeLimit = Number.isFinite(parsed) && parsed > 0 ? parsed : 5;
+    return this.tasksService.analyticsTopUsersByTerminatedCost(safeLimit);
   }
 
   @Get(':id')
