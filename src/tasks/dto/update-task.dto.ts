@@ -5,6 +5,8 @@ import {
   IsOptional,
   IsString,
   MinLength,
+  IsArray,
+  IsInt,
 } from 'class-validator';
 
 export class UpdateTaskDto {
@@ -36,4 +38,9 @@ export class UpdateTaskDto {
   @IsOptional()
   @IsNumber()
   cost?: number;
+
+  @IsOptional()
+  @IsArray()
+  @IsInt({ each: true })
+  assigneeIds?: number[];
 }

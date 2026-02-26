@@ -1,6 +1,9 @@
 import {
+  ArrayNotEmpty,
+  IsArray,
   IsDateString,
   IsIn,
+  IsInt,
   IsNumber,
   IsOptional,
   IsString,
@@ -24,7 +27,6 @@ export class CreateTaskDto {
   @IsNumber()
   spentHours?: number;
 
-  // ISO 8601: "2026-03-01T00:00:00.000Z"
   @IsDateString()
   dueDate: string;
 
@@ -34,4 +36,10 @@ export class CreateTaskDto {
 
   @IsNumber()
   cost: number;
+
+  @IsOptional()
+  @IsArray()
+  @ArrayNotEmpty()
+  @IsInt({ each: true })
+  assigneeIds?: number[];
 }
