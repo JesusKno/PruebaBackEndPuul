@@ -1,98 +1,224 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# Prueba Técnica Backend – NestJS + TypeScript + PostgreSQL + Prisma
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+API REST construida con **NestJS**, **TypeScript**, **PostgreSQL** y **Prisma** para gestión de **Usuarios** y **Tareas** (many-to-many), con filtros combinables y endpoints de analítica.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+## Repositorio
 
-## Description
+Repositorio (público): https://github.com/JesusKno/PruebaBackEndPuul.git  
+Rama principal: `main`
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+---
 
-## Project setup
+## Requisitos
+
+- Node.js **20.20.0** (recomendado)
+- PostgreSQL (local)
+- npm
+
+---
+
+## Setup rápido
+
+### 1) Clonar el repositorio
 
 ```bash
-$ npm install
+git clone https://github.com/JesusKno/PruebaBackEndPuul.git
+cd PruebaBackEndPuul
+
+2) Instalar dependencias
+
+npm install
+
+3) Configurar variables de entorno
+
+Crea un archivo .env en la raíz del proyecto:
+DATABASE_URL="postgresql://postgres:<PASSWORD>@localhost:5432/puulbd?schema=public"
+
+4) Migraciones Prisma
+
+npx prisma generate
+npx prisma migrate dev
+
+5) Seed de catálogos (roles y estatus)
+
+Este proyecto incluye un seed en TypeScript:
+
+npm run db:seed
+
+El seed inserta catálogos en español:
+
+Roles: ADMINISTRADOR, MIEMBRO
+
+Estatus: ACTIVA, TERMINADA
+
+6) Levantar el servidor
+
+npm run start:dev
+
+Servidor por defecto:
+
+http://localhost:3000
+
+
+7) Modelo de datos (resumen)
+
+UserRole: catálogo de roles
+
+TaskStatus: catálogo de estatus
+
+User
+
+Task
+
+TaskAssignee: relación many-to-many entre User y Task
+
+8) Endpoints
+Users
+Crear usuario
+
+POST /users
+
+Body:
+
+{
+  "name": "Juan Perez",
+  "email": "juan.perez@test.com",
+  "role": "MIEMBRO"
+}
+Listar usuarios (con filtros + métricas)
+
+GET /users
+
+Query params opcionales:
+
+name
+
+email
+
+role (MIEMBRO | ADMINISTRADOR)
+
+Incluye métricas por usuario:
+
+cantidad de tareas TERMINADA
+
+suma total de cost_task de tareas TERMINADA
+
+Obtener usuario por id
+
+GET /users/:id
+
+Actualizar usuario
+
+PATCH /users/:id
+
+Body (ejemplo):
+
+{
+  "name": "Juan Perez Updated",
+  "role": "ADMINISTRADOR"
+}
+Eliminar usuario
+
+DELETE /users/:id
+
+Tasks
+Crear tarea (incluye asignación de usuarios)
+
+POST /tasks
+
+Body:
+
+{
+  "title": "Tarea 1",
+  "description": "Descripcion de tarea",
+  "estimatedHours": 10,
+  "spentHours": 2,
+  "dueDate": "2026-03-10T00:00:00.000Z",
+  "status": "ACTIVA",
+  "cost": 1500,
+  "assigneeIds": [1, 2]
+}
+
+spentHours es opcional.
+
+Listar tareas (orden y filtros combinables)
+
+GET /tasks
+
+Orden:
+
+por created_at desc (más reciente → más antigua)
+
+Query params opcionales (combinables):
+
+status (ACTIVA | TERMINADA)
+
+assigneeId (id de usuario asignado)
+
+title (búsqueda por contains)
+
+dueDateFrom (ISO)
+
+dueDateTo (ISO)
+
+assigneeQuery (búsqueda por nombre o correo del usuario asignado)
+
+Ejemplo:
+GET /tasks?status=ACTIVA&assigneeId=2&title=Tarea&dueDateFrom=2026-03-01T00:00:00.000Z&dueDateTo=2026-03-30T00:00:00.000Z&assigneeQuery=@test.com
+
+Obtener tarea por id
+
+GET /tasks/:id
+
+Actualizar tarea (incluye reasignación de usuarios)
+
+PATCH /tasks/:id
+
+Ejemplo:
+
+{
+  "title": "Tarea 1 - Updated",
+  "status": "TERMINADA",
+  "assigneeIds": [2, 3]
+}
+
+Si assigneeIds viene en el request, se realiza replace de asignaciones (reescritura total).
+
+Asignar usuarios adicionales a tarea
+
+POST /tasks/:id/assignees
+
+Body:
+
+{
+  "assigneeIds": [3, 2]
+}
+
+Si un usuario ya estaba asignado, se ignora (no duplica) por PK compuesta y skipDuplicates.
+
+Eliminar tarea
+
+DELETE /tasks/:id
+
+Analytics
+
+Se incluyen endpoints de analítica para consulta separada (y un endpoint agregado).
+
+Analytics agregado
+
+GET /tasks/analytics
+
+Retorna:
+
+tasksByStatus
+
+topUsersByTerminatedCost
+
+Conteo por estatus
+
+GET /tasks/analytics/status
+
+Top usuarios por costo total en tareas TERMINADAS
+
+GET /tasks/analytics/top-users?limit=5
 ```
-
-## Compile and run the project
-
-```bash
-# development
-$ npm run start
-
-# watch mode
-$ npm run start:dev
-
-# production mode
-$ npm run start:prod
-```
-
-## Run tests
-
-```bash
-# unit tests
-$ npm run test
-
-# e2e tests
-$ npm run test:e2e
-
-# test coverage
-$ npm run test:cov
-```
-
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
-```bash
-$ npm install -g @nestjs/mau
-$ mau deploy
-```
-
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
-
-## Resources
-
-Check out a few resources that may come in handy when working with NestJS:
-
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
-
-## Support
-
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
-
-## Stay in touch
-
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
-
-## License
-
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
