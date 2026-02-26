@@ -13,6 +13,7 @@ import { TasksService } from './tasks.service';
 import { CreateTaskDto } from './dto/create-task.dto';
 import { UpdateTaskDto } from './dto/update-task.dto';
 import { AssignAssigneesDto } from './dto/assign-assignees.dto';
+import { title } from 'process';
 
 @Controller('tasks')
 export class TasksController {
@@ -27,11 +28,19 @@ export class TasksController {
   findAll(
     @Query('status') status?: 'ACTIVA' | 'TERMINADA',
     @Query('assigneeId') assigneeId?: string,
+    @Query('title') title?: string,
+    @Query('dueDateFrom') dueDateFrom?: string,
+    @Query('dueDateTo') dueDateTo?: string,
+    @Query('assigneeQuery') assigneeQuery?: string,
   ) {
     const parsedAssigneeId = assigneeId ? Number(assigneeId) : undefined;
     return this.tasksService.findAll({
       status,
       assigneeId: parsedAssigneeId,
+      title,
+      dueDateFrom,
+      dueDateTo,
+      assigneeQuery,
     });
   }
 
